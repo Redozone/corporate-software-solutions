@@ -1,0 +1,226 @@
+## Запуск остановленного docker.
+
+проверим, остановлен ли докер:
+```bash
+$ docker ps   # список запущенных докеров
+```
+если нашего докера там нет, то проверим его наличие в системе
+```bash
+$ docker ps -a  # список всех докеров на компьютере
+```
+Если докер есть, то надо его запустить:
+```bash
+$ docker start <docker id>
+```
+Теперь если мы хотим зайти на него, то следует выполнить:
+```bash
+$ docker attach <docker id>
+```
+
+## Создание docker.
+
+Сначала создаем Dockerfile:   
+```txt
+FROM dockerreg.local:5000/astra-docker:latest # наш pull из репа докеров
+ADD comm_c / # папка, содержимое (не эта папка, а что внутри) которую мы хотим прокинуть в докер
+CMD [ "/bin/bash" ]
+```
+
+Теперь надо сделать build нашего docker:   
+делаем в папке с Dockerfile    
+
+```bash
+$ docker build -t <желаемое имя докера> .
+$ docker images - увидим наш докер
+$ docker run -it -p 8888:8888 <желаемое имя докера>:latest
+```
+
+теперь мы работаем в нашем докере   
+
+докер настроен и проверен теперь надо его за push`ить в докер хранилище    
+ у меня адрес и порт этого хранилища выглядит так:    
+
+```txt
+dockerreg.local:5000 или 192.168.34.208:/5000   
+```
+И так, прежде чем пушить, надо сделать commit изменений, выполним:    
+
+```bash
+$ docker container ls
+```
+
+Увидим список контейнеров, из него нам нужны поля "CONTAINER ID" и "IMAGE"    
+
+Делаем commit:    
+
+```bash
+$ docker container commit <CONTAINER ID> <IMAGE>
+# $ docker container commit 6e699601ea1f astra_comm_c:latest (пример)
+```
+
+если все хрошо, то получим длинную строчку код    
+
+Далее следует задать tag этому контейнеру, для этого выполним следующее:     
+
+```bash
+$ docker image tag <IMAGE> <ПУТЬ Хранилища:Порт хранилища>/<IMAGE>
+# $ docker image tag astra_comm_c:latest dockerreg.local:5000/astra_comm_c:latest ( пример )
+```
+
+Теперь можно делать push по нашему новому тегу     
+
+```bash
+$ docker image push <ПУТЬ Хранилища:Порт хранилища>/<IMAGE>
+# $ docker image push dockerreg.local:5000/astra_comm_c:latest (пример)
+```
+
+## Создаем docker-compose.
+
+
+Для этого необходимо создать ***docker-compose.yml*** файл.   
+
+содержимое файла
+```yml
+version: '3'
+services:
+  bmac:
+    tty: true
+    image: dockerreg.local:5000/astra_psql:latest
+    container_name: bmac
+    ports:
+      - 8888:8888
+    
+    restart: 'no'
+    command: bash -c "/etc/init.d/postgresql start && /bin/bash"
+      
+  comm_c:
+    tty: true
+    image: dockerreg.local:5000/astra_comm_c:latest
+    container_name: comm_c
+    ports:
+      - 8889:8889
+    tty: true
+    restart: 'no'
+    command: bash -c "/etc/init.d/postgresql start && /bin/bash"
+```
+
+Переходим в консоли к нашему файлу docker-compose.yml и выполняем следующую команду:     
+
+```bash
+$ docker-compose up --build -d
+```
+
+Для просмотра, что все получилось:     
+
+```bash
+$ docker-compose.yml
+$ docker-compose ps
+```
+
+State должен быть Up     
+
+Теперь наш **compose** запущен, можно работать
+
+## Удалить docker.   
+
+```bash
+$ docker rm $(docker ps -a -q)
+# $ docker rm <container id>
+```
+
+
+
+## Создал докер, в которм нет Dockerfile
+
+Как запустить в нем сервис в авторане.
+
+Пишем скрипт sh на запуск в папку /etc/profile.d/<script.sh>
+```bash
+#!/bin/bash
+cd
+cd /opt/
+echo $1 
+echo $2
+source venv/bin/activate
+python3 servise.py
+```
+не забываем сделать файл исполняемым:
+```bash
+chmod +x /etc/profile.d/<script.sh>
+```
+
+
+Этот скрипт запускает наш сервис, теперь необходимо, чтобы и сам скрипт запускался при старте,
+ для этого в конец файла /etc/bash.bashrc добавим строку вызова скрипта:
+```bash
+......
+......
+/etc/profile.d/<script.sh>
+```
+
+
+Если же необходимо передать параметры при выполнении скрипта или как можно было поступить проще:
+Создаем все тот же файл bash, который будет запускать наш сервис, но уже в нашей директории, например /opt/<script.sh>
+```bash
+#!/bin/bash
+#!/bin/bash
+
+path_conf='/home/diffraction/NIR_integration/stacataloguer/s3-fastAPI/config_s3_ex.json'
+jsonStr=$(jq '.' $path_conf)
+
+if [ -z "$1" ]
+  then
+    echo "No argument <host> supplied"
+else
+  variable_host=$1
+  jsonStr=$(jq --arg variable_host "$variable_host" '.host = $variable_host' <<< "$jsonStr")
+fi
+
+if [ -z "$2" ]
+  then
+    echo "No argument <port> supplied"
+else
+  variable_port=$2
+  jsonStr=$(jq --arg variable_port "$variable_port" '.port = $variable_port' <<< "$jsonStr")
+fi
+
+echo $jsonStr > $path_conf
+
+cd
+cd /opt/
+source venv/bin/activate
+#echo $VIRTUAL_ENV # проверка на активацию venv
+
+ проверка на активацию venv
+if [ -z "$VIRTUAL_ENV" ]
+  then
+    echo "Venv does not activate"
+else
+  echo "Venv activate"
+  python3 servise.py
+fi
+```
+не забываем сделать файл исполняемым:
+```bash
+chmod +x /opt/<script.sh>
+```
+
+А теперь запускаем этот скрипт при старте docker
+```
+docker run -it -p 8081:8081 --network=host 192.168.34.208:5000/stac_start:latest_ceph_active7 /opt/<script.sh> param1 param2
+docker run -it -p 8081:8081 --network=host 192.168.34.208:5000/stac_start:stac_for_demo
+```
+
+Загрузка из docker registry в Dockerfile    
+```txt
+FROM 192.168.34.13:5000/stac_start:demo_may
+LABEL maintainer="AO_niitp"
+LABEL description="STAC каталог обработки ДЗЗ"
+```
+
+
+SNAP для ubuntu https/http
+путь: /var/snap/docker/current/config/daemon.json - дописать хости и порт
+перезапустить snap: sudo snap restart docker
+
+
