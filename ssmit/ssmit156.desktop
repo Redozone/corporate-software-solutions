@@ -1,0 +1,15 @@
+[Desktop Entry]
+Name=SSMIT156
+Name[ru]=СПО ВИ
+Comment=Controlling program of product 14F156
+Comment[ru]=Специальное программное обеспечение выдачи информации об изделии 14Ф156
+GenericName=Monitoring of 14F156
+GenericName[ru]=Наблюдение за 14Ф156
+X-GNOME-FullName=Monitoring program of product 14F156
+X-GNOME-FullName[ru]=Специальное программное обеспечение выдачи информации об изделии 14Ф156
+Exec=/usr/bin/ssmit.sh
+Terminal=false
+X-MultipleArgs=false
+Type=Application
+Icon=preferences-system-performance
+Categories=Utility;Graphics

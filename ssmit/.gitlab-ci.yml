@@ -1,0 +1,136 @@
+variables:
+  GIT_SUBMODULE_STRATEGY: normal
+  LOCK_PATH: ".config/gitlab-runner"
+
+stages:
+  - build_projects
+# - test_projects - todo: запускать автотесты именно после билда проекта
+  - create_packages
+  - publish_packages
+  - deploy_packages
+
+.package_env: &pkg_env
+  - cd "${CI_PROJECT_DIR}"
+  - PACKAGE_NAME=$(ls *.deb) && echo PACKAGE_NAME="${PACKAGE_NAME}" > "${CI_PROJECT_DIR}"/vars.env
+  - PACKAGE_SHORT_NAME=$(dpkg-deb --show --showformat='${Package}\n' "${PACKAGE_NAME}") && echo PACKAGE_SHORT_NAME="${PACKAGE_SHORT_NAME}" >> "${CI_PROJECT_DIR}"/vars.env
+  - PACKAGE_VERSION=$(dpkg-deb --show --showformat='${Version}\n' "${PACKAGE_NAME}") && echo PACKAGE_VERSION="${PACKAGE_VERSION}" >> "${CI_PROJECT_DIR}"/vars.env  
+  - mkdir ./packages && mv ./"${PACKAGE_NAME}" ./packages
+
+build_ssmit:
+  stage: build_projects
+  tags:
+    - build_runner
+  script:
+    - cd ./information_support/
+    - fakeroot debian/rules build
+  artifacts:
+    paths:
+    - ./information_support/builddir
+    - ./information_support/build-stamp
+    - ./information_support/protoc
+    expire_in: 3 days
+  resource_group: build
+
+build_test_deb:
+  stage: create_packages
+  tags:
+    - build_runner
+  before_script:
+    - git tag -l | xargs git tag -d >/dev/null 2>&1
+    - git fetch --tags --all
+  script:
+    - cd ./information_support/
+    - PACKAGE_LAST_TAG=$(git tag -l "v*" --merged remotes/origin/master --sort=-v:refname 2>/dev/null | head -n1)
+    - echo "Detected last tag = ${PACKAGE_LAST_TAG}" 
+    - test "${PACKAGE_LAST_TAG}x" == "x" && PACKAGE_LAST_TAG=v0.0.666
+    - test $(echo "${PACKAGE_LAST_TAG}" | grep -E "^v[0-9]+\.[0-9]+\.[0-9]+$" | wc -l) -eq 0 && exit 1
+    - PACKAGE_SHORT_TAG=$(echo "${PACKAGE_LAST_TAG}" | cut -d 'v' -f 2)
+    - PACKAGE_TEST_VERSION="${PACKAGE_SHORT_TAG}-g${CI_COMMIT_SHORT_SHA}"
+    - dch -b -v"${PACKAGE_TEST_VERSION}" "Package with "${CI_PROJECT_NAME}" is automatically generated with Gitlab CI. Commit "${CI_COMMIT_SHA}""
+    - echo "${PACKAGE_TEST_VERSION}" > ../VERSION.md
+    - fakeroot debian/rules binary
+    - *pkg_env
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "testing"'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never 
+  artifacts:
+    paths:
+      - ./packages
+    reports:
+      dotenv: vars.env
+    expire_in: 3 days
+  resource_group: package
+
+build_release_deb:
+  stage: create_packages
+  tags:
+    - build_runner
+  before_script:
+    - SHORT_REPOSITORY_URL=$(echo "${CI_REPOSITORY_URL}" | cut -d '@' -f 2)
+    - git remote set-url origin http://oauth2:"${SSMIT_156_USER}"@"${SHORT_REPOSITORY_URL}"
+    - git fetch origin
+    - test $(echo "${CI_COMMIT_TAG}" | grep -E "^rc[0-9]+\.[0-9]+\.[0-9]+$" | wc -l) -eq 0 && exit 1
+    - TAG_BRANCH=$(git branch -r --contains $(git rev-parse HEAD) 2>/dev/null | sed "s/^ *origin\///")
+    - test "$TAG_BRANCH" != "master" && exit 1
+    - SHORT_TAG=$(echo "${CI_COMMIT_TAG}" | cut -c 3-)
+    - REAL_TAG=$(echo "v${SHORT_TAG}")
+    - TAG_CONTENT=$(git tag -l --format='%(contents)' "${CI_COMMIT_TAG}")
+    - CURRENT_DATETIME=$(date "+%d.%m.%Y %H:%M")
+  script:
+    - cd ./information_support/
+    - dch -r "" --no-force-save-on-release
+    - dch -v "${SHORT_TAG}" --no-force-save-on-release "${TAG_CONTENT}"
+    - echo -e "# ["${REAL_TAG}"] - "${CURRENT_DATETIME}"\n## "${TAG_CONTENT}"\n\n$(cat ../CHANGELOG.md)" > ../CHANGELOG.md
+    - echo "${SHORT_TAG}" > ../VERSION.md
+    - fakeroot debian/rules binary
+    - *pkg_env
+    - git add information_support/debian/changelog CHANGELOG.md VERSION.md
+    - git commit -m "[ci skip] Gitlab CI/CD. Auto commit for new version tag ${REAL_TAG}"
+    - git tag "${REAL_TAG}"
+    - git push origin HEAD:"${TAG_BRANCH}" --tags
+  rules:
+    - if: '$CI_COMMIT_TAG'
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never 
+  artifacts:
+    paths:
+      - ./packages
+    reports:
+      dotenv: vars.env
+    expire_in: 3 days
+  resource_group: package
+
+push_to_repo:
+  stage: publish_packages
+  tags:
+    - build_runner
+  before_script:
+    - source ${CI_PROJECT_DIR}/tests/gitlab-ci/select_repo.sh
+  script:
+    - ${CI_PROJECT_DIR}/tests/gitlab-ci/push_repo.sh
+  rules:
+    - if: ($CI_COMMIT_TAG || $CI_COMMIT_BRANCH == "testing")
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never 
+  resource_group: release
+
+deploy_deb:
+  stage: deploy_packages
+  tags:
+    - deploy_runner
+  before_script:
+    - test -d "${HOME}"/"${LOCK_PATH}" || mkdir -p "${HOME}"/"${LOCK_PATH}"
+    - test -e "${HOME}"/"${LOCK_PATH}"/pipeline.lock && exit 1
+    - cp "${CI_PROJECT_DIR}"/tests/gitlab-ci/pipeline.lock "${HOME}"/"${LOCK_PATH}"/
+    - source ${CI_PROJECT_DIR}/tests/gitlab-ci/select_repo.sh
+  script:
+    - ${CI_PROJECT_DIR}/tests/gitlab-ci/deploy.sh
+  after_script:
+    - source "${HOME}"/"${LOCK_PATH}"/pipeline.lock
+    - test "$DEBUG_DEPLOY" != true && rm "${HOME}"/"${LOCK_PATH}"/pipeline.lock
+  rules:
+    - if: ($CI_COMMIT_TAG || $CI_COMMIT_BRANCH == "testing")
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+      when: never 
+#  resource_group: deploy

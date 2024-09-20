@@ -1,0 +1,11 @@
+Source: simplecrypt
+Section: misc
+Priority: optional
+Maintainer: 196 <196@niitp.ru>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.5
+
+Package: simplecrypt
+Architecture: amd64
+Depends: ${shlibs:Depends}, ${misc:Depends} qt5.15.2-custom196
+Description: simple encoding-decoding tool

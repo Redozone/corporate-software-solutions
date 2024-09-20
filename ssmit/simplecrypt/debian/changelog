@@ -1,0 +1,17 @@
+simplecrypt (1.0.3) UNRELEASED; urgency=low
+
+  * Qt build depend fix
+
+ -- user <user196@niitp.ru>  Sat, 01 Oct 2022 16:13:06 +0300
+	
+simplecrypt (1.0.2) UNRELEASED; urgency=low
+
+  * Dependency fix
+
+ -- user <user196@niitp.ru>  Sat, 01 Oct 2022 16:12:06 +0300
+
+simplecrypt (1.0.1) UNRELEASED; urgency=low
+
+  * Initial release
+
+ -- user <user196@niitp.ru>  Sat, 01 Oct 2022 16:11:06 +0300

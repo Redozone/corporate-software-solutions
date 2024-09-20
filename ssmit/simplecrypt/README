@@ -1,0 +1,2 @@
+Пример запуска расшифровки ./SimpleDimpl -d 88005553535 your_word
+Пример запуска зашифровки ./SimpleDimpl -e 88005553535 your_word

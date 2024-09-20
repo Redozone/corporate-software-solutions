@@ -1,0 +1,56 @@
+#!/usr/bin/make -f
+APPNAME := simplecrypt
+FAKEROOT := $(APPNAME)
+RELAXEDPERMS1 := niitp/kan/runtime/bin/ssmit-148
+CORES := $(shell cat /proc/cpuinfo | grep processor | wc -l)
+
+builddir:
+	mkdir -p builddir
+
+builddir/Makefile: builddir
+	cd builddir && QT_SELECT=Qt5.15.2 qmake PREFIX=/usr ../$(APPNAME).pro
+build: build-stamp
+
+build-stamp: builddir/Makefile
+	dh_testdir
+	# Add here commands to compile the package.
+	cd builddir && $(MAKE) -j$(CORES)
+	touch $@
+
+clean:
+	dh_testdir
+	dh_testroot
+	rm -f build-stamp
+	# Add here commands to clean up after the build process.
+	rm -rf builddir
+	rm -rf $(CURDIR)/debian/$(FAKEROOT)
+	dh_clean
+
+install: build
+	dh_testdir
+	dh_testroot
+	dh_clean -k
+	dh_installdirs
+
+	# Add here commands to install the package into debian/your_appname
+	cd builddir && $(MAKE) INSTALL_ROOT=$(CURDIR)/debian/$(FAKEROOT) install
+	mkdir -p $(CURDIR)/debian/$(FAKEROOT)/usr/share/doc/$(FAKEROOT) && gzip --best --no-name --to-stdout $(CURDIR)/debian/changelog > $(CURDIR)/debian/$(FAKEROOT)/usr/share/doc/$(FAKEROOT)/changelog.gz
+
+# Build architecture-independent files here.
+binary-indep: build install
+# We have nothing to do by default.
+
+# Build architecture-dependent files here.
+binary-arch: build install
+	dh_testdir
+	dh_testroot
+	QT_SELECT=Qt5.15.2 dh_install
+	dh_link
+	dh_compress
+	dh_fixperms
+	dh_installdeb
+	dh_gencontrol
+	dh_builddeb --destdir=.
+
+binary: binary-indep binary-arch
+.PHONY: build clean binary-indep binary-arch binary install configure

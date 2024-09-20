@@ -1,0 +1,68 @@
+# C++ objects and libs
+
+*.slo
+*.lo
+*.o
+*.a
+*.la
+*.lai
+*.so
+*.dll
+*.dylib
+*configuration.pb.*
+
+# Qt-es
+
+/.qmake.cache
+/.qmake.stash
+*.pro.user
+*.pro.user.*
+*.qbs.user
+*.qbs.user.*
+*.moc
+moc_*.cpp
+qrc_*.cpp
+ui_*.h
+Makefile*
+*-build-*
+*_REMOTE_*.h
+*.save*
+
+# QtCreator
+
+*.autosave
+*_BACKUP_*.*
+*_LOCAL_*.*
+*_BASE_*.*
+*_REMOTE_*.*
+*.orig*
+
+#QtCtreator Qml
+*.qmlproject.user
+*.qmlproject.user.*
+
+#Dolphin
+.directory
+
+#Build directory
+/build-*
+traning_app/build*
+Tests/build*
+Tests/BallisticDB/build*/
+build-IAO-Desktop-Debug/
+information_support/build*
+trackwriter_service/build*
+trackwriter_service/trackwriter/build*
+#iao_us_sost
+iao_us_sost/*
+
+#files from protoc
+*configuration.pb.*
+Tests/build-tetsDB-Desktop-Debug/
+Tests/BallisticDB/build-BallisticServer-Desktop-Debug/
+
+Doc/*
+Doxyfile*
+
+#vim
+*.swp
