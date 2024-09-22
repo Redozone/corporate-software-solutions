@@ -1,0 +1,40 @@
+
+
+You have to use bash and pass the argument in quotes:
+
+#include <QCoreApplication>
+#include <QProcess>
+#include <QDebug>
+
+int main(int argc, char *argv[])
+{
+    QCoreApplication a(argc, argv);
+
+    QProcess process;
+    QObject::connect(&process, &QProcess::readyReadStandardOutput, [&process](){
+       qDebug()<<process.readAllStandardOutput();
+    });
+    QObject::connect(&process, &QProcess::readyReadStandardError, [&process](){
+       qDebug()<<process.readAllStandardError();
+    });
+    process.start("/bin/bash -c \"xrandr |grep \\* |awk '{print $1}' \"");
+    return a.exec();
+}
+
+Output:
+
+"1366x768\n"
+
+Or:
+
+QProcess process;
+process.start("/bin/bash", {"-c" , "xrandr |grep \\* |awk '{print $1}'"});
+
+Or:
+
+QProcess process;
+QString command = R"(xrandr |grep \* |awk '{print $1}')";
+process.start("/bin/sh", {"-c" , command});
+
+Share
+Follow
