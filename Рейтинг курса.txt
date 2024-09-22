@@ -1,0 +1,46 @@
+Рейтинг курса
+
+Для оценки качества пройденных курсов нашей командой разработана рейтинговая система, 
+которая позволяет на основе отзывов людей, прошедших курс, 
+составить его рейтинг. Для простоты восприятия была реализована бальная система. 
+В разработанной системе оценка 5 баллов - наивысшая оценка курса, 1 балл - наименьшая оценка курса.
+На основе этих оценок можно сделать выводы о возможности сотрудничества с оцениваемым компанией, 
+предоставляющей услугу конкретного курса. 
+Платформа позволит выбирать лучшие курсы, которые предпочитаемы сотрудниками, 
+а также повысить качество знаний.
+
+
+Course rating
+
+To assess the quality of the courses completed, our team has developed a rating system
+that allows us to
+make a rating based on the feedback of people who have completed the course. For ease of perception, a point system was implemented. 
+In the developed system, a score of 5 points is the highest grade of the course, 1 point is the lowest grade of the course.
+Based on these assessments, it is possible to draw conclusions about the possibility of cooperation with the evaluated company
+providing a specific course service. 
+The platform will allow you to choose the best courses that are preferred by employees,
+as well as improve the quality of knowledge.
+
+
+----------------------
+
+План курсов
+
+На этом слайде вы можете наблюдать план курсов. Здесь на временной шкале есть отметки о датах начала и конца курсов. 
+Такая структура позволяет оценить текцщее состояние курсов: какие курсы уже идут, какие планируются, какие уже прошли, длительность курсов.
+Так же на каждой шкале можно увидеть рейтинг курса, составленном на основе всех предыдущих отзывов. 
+Такое представление позволяет проще оценить текущую обстановку дел. Позволяет сэкономить время сотрудника отдела обучения и подобрать оптимальные курсы для сотрудников.
+Данный план помогает оценить колличество доступных аудиторий и составить оптимальный график их использования. 
+Возможность просмотра прошедших курсов, позволяет вписать его в будущее расписание при условии высокой оценки.
+Наш план дает возможность фильтровать информацию по контрагентам, что дает возможность оценить загрузку такого исполнителя и точнее вести взаимную работу
+
+
+Course plan
+
+On this slide you can observe the course plan. There are marks on the timeline here about the start and end dates of the courses. 
+This structure allows you to assess the current state of the courses: which courses are already underway, which are planned, which have already been completed, and the duration of the courses.
+Also, on each scale, you can see the rating of the course, based on all previous reviews. 
+This view makes it easier to rate the current situation. It allows you to save time for an employee of the training department and choose the best courses for employees.
+This plan helps to estimate the number of available rooms and create an optimal schedule for their use. 
+The ability to view past courses allows you to enter it into the future schedule, subject to a high grade.
+Our plan makes it possible to filter information by contractors, which makes it possible to rate the workload of such an executor and more accurately conduct command work
